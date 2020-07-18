@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Anon-Chat</title>
+    <script type="text/javascript">
+      function dec2hex(n) {
+        return n < 10 ? '0' + String(n) : n.toString(16)
+      }
+
+      function generateId(len) {
+        var arr = new Uint8Array(len / 2)
+        window.crypto.getRandomValues(arr)
+        return Array.from(arr, dec2hex).join('')
+      }
+
+      function generateRoom() {
+        var room = generateId(20)
+        window.location.href = `/rooms/${room}`
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Anon-Chat</h1>
+    <p>
+      Create ephemeral chat rooms
+    </p>
+    <button type="button" onclick="generateRoom()">Generate room</button>
+  </body>
+</html>

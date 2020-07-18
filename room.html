@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Room {room}</title>
+    <script>
+
+      function getRandomInt(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+      }
+
+      var socket = undefined
+      var room = undefined
+      var user = String(getRandomInt(10000))
+
+      function setupConnection() {
+        var host = window.location.host
+        var path = window.location.pathname
+        var protocol = host.includes('localhost') ? 'ws' : 'wss'
+        var url = `${protocol}://${host}${path}`
+        console.log('Connecting to url', url)
+        socket = new WebSocket(url)
+        socket.onopen = function() {
+          document.getElementById('connected').textContent = "true"
+          document.getElementById('send').disabled = false
+
+          refreshMessages()
+          setInterval(refreshMessages, 5000)
+        }
+        socket.onmessage = onMessage
+
+        room = path.split('/').pop()
+        document.getElementById('room').textContent = room
+        document.title = "Room " + room
+      }
+
+      function closeConnection() {
+        if (socket) {
+          socket.close()
+        }
+      }
+
+      function refreshMessages() {
+        console.log("Polling for new messages")
+        socket.send(JSON.stringify({type: "refresh", room}))
+      }
+
+      function sendMessage() {
+        var text = document.getElementById("text").value
+        if (text === "") return
+        var msg = {
+          type: "message",
+          text,
+          room,
+          user
+        }
+
+        socket.send(JSON.stringify(msg))
+        document.getElementById("text").value = ""
+      }
+
+      function onMessage(event) {
+        var msg = JSON.parse(event.data)
+        console.log('On Message', msg)
+        switch (msg.type) {
+          case "refresh":
+            setMessages(msg.messages)
+            break
+          default:
+            console.log("Unknown message type:", msg)
+
+        }
+      }
+
+      function setMessages(messages) {
+        var ul = document.getElementById('messages')
+        ul.innerHTML = ""
+        messages.forEach(msg => {
+          var item = document.createElement('li')
+          item.appendChild(document.createTextNode(JSON.stringify(msg, null, 2)))
+          ul.appendChild(item)
+        })
+      }
+
+      document.addEventListener('readystatechange', function() {
+        if (document.readyState === "complete") {
+          setupConnection()
+        }
+      })
+
+      window.onbeforeunload = closeConnection()
+    </script>
+  </head>
+
+  <h1>Room <span id="room"></span></h1>
+  <p id="connected">false</p>
+
+  <div>
+    <h3>Chat</h3>
+    <p>
+      <ul id="messages">
+      </ul>
+    </p>
+  </div>
+  <div>
+    <input id="text" type="text" name="text" />
+    <button id="send" type="button" name="send" onclick="sendMessage()" disabled>Send</button>
+  </div>
+</html>
