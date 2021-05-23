@@ -23,10 +23,8 @@ const messages = {}
 // websocket
 const wss = new WebSocket.Server({server})
 wss.on('connection', (conn) => {
-  console.log('connection', conn)
   conn.on('message', (data) => {
     var message = JSON.parse(data)
-    console.log('message', message)
     switch (message.type) {
       case "message":
         addNewMessage(message.room, message.user, message.text)
@@ -41,7 +39,7 @@ wss.on('connection', (conn) => {
         conn.send(JSON.stringify({type: "refresh", messages: messages[message.room] || []}))
         break
       default:
-        console.log("Unknown message type", message)
+        console.error("Unknown message type", message)
     }
   })
 })
